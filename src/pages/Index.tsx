@@ -1,13 +1,56 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { LandingPage } from "@/components/LandingPage";
+import { LocationModal } from "@/components/LocationModal";
+import { Dashboard } from "@/components/Dashboard";
+
+type AppState = 'landing' | 'location' | 'dashboard';
+
+interface UserLocation {
+  lat: number;
+  lng: number;
+  address: string;
+}
 
 const Index = () => {
+  const [appState, setAppState] = useState<AppState>('landing');
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+
+  const handleAuthAction = () => {
+    setAppState('location');
+  };
+
+  const handleLocationSet = (lat: number, lng: number, address: string) => {
+    setUserLocation({ lat, lng, address });
+    setAppState('dashboard');
+  };
+
+  const handleBackToLanding = () => {
+    setAppState('landing');
+    setUserLocation(null);
+  };
+
+  if (appState === 'dashboard' && userLocation) {
+    return (
+      <Dashboard
+        userLocation={userLocation}
+        onBack={handleBackToLanding}
+      />
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      <LandingPage
+        onLogin={handleAuthAction}
+        onRegister={handleAuthAction}
+        onGuest={handleAuthAction}
+      />
+      
+      <LocationModal
+        isOpen={appState === 'location'}
+        onLocationSet={handleLocationSet}
+      />
+    </>
   );
 };
 
