@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Users, DollarSign } from "lucide-react";
@@ -12,17 +12,6 @@ interface HotspotMapProps {
   center: [number, number];
   zoom: number;
 }
-
-// Component to update map view when center changes
-const MapUpdater = ({ center, zoom }: { center: [number, number], zoom: number }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [map, center, zoom]);
-  
-  return null;
-};
 
 const getHotspotColor = (intensity: string) => {
   switch (intensity) {
@@ -43,16 +32,18 @@ const getHotspotRadius = (intensity: string) => {
 };
 
 export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
+  // Create a unique key to force MapContainer re-render when center changes
+  const mapKey = `${center[0]}-${center[1]}-${zoom}`;
+  
   return (
     <div className="flex-1 h-full relative">
       <MapContainer
+        key={mapKey}
         center={center as LatLngExpression}
         zoom={zoom}
         style={{ height: '100%', width: '100%' }}
         className="rounded-lg"
       >
-        <MapUpdater center={center} zoom={zoom} />
-        
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
