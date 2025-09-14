@@ -1,8 +1,18 @@
 import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Users, DollarSign, MapPin } from "lucide-react";
 import { Hotspot } from '@/data/mockHotspots';
+import L from 'leaflet';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface HotspotMapProps {
   hotspots: Hotspot[];
@@ -22,35 +32,35 @@ const getHotspotColor = (intensity: string) => {
 export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   return (
     <div className="flex-1 h-full relative">
-      {/* Temporary placeholder - will replace with actual map once error is resolved */}
-      <div className="h-full w-full bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
-        <div className="text-center p-8">
-          <MapPin className="h-16 w-16 text-map-accent mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Interactive Map Loading...</h3>
-          <p className="text-muted-foreground mb-4">
-            Analyzing {hotspots.length} hotspots near {center[0].toFixed(4)}, {center[1].toFixed(4)}
-          </p>
-          <div className="text-sm text-muted-foreground">
-            Zoom level: {zoom}
-          </div>
-        </div>
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%' }}
+        className="rounded-lg"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
         
-        {/* Show hotspots as floating cards */}
-        <div className="absolute inset-4 overflow-y-auto space-y-2">
-          {hotspots.slice(0, 3).map((hotspot, index) => (
-            <Card key={hotspot.id} className="bg-card/90 backdrop-blur-sm">
-              <CardContent className="p-3">
+        {hotspots.map((hotspot) => (
+          <Marker
+            key={hotspot.id}
+            position={[hotspot.lat, hotspot.lng]}
+          >
+            <Popup>
+              <div className="p-2 min-w-[200px]">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-sm">{hotspot.address}</h4>
                   <Badge 
                     variant={hotspot.intensity === 'high' ? 'default' : hotspot.intensity === 'medium' ? 'secondary' : 'outline'}
-                    className="text-xs"
+                    className="text-xs ml-2"
                   >
                     {hotspot.intensity}
                   </Badge>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="grid grid-cols-3 gap-2 text-xs mb-2">
                   <div className="flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1 text-accent" />
                     <span>{hotspot.score}/100</span>
@@ -65,20 +75,18 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
                   </div>
                 </div>
                 
-                <div className="mt-2">
-                  <div className="flex flex-wrap gap-1">
-                    {hotspot.shopTypes.slice(0, 2).map((type) => (
-                      <Badge key={type} variant="outline" className="text-xs">
-                        {type}
-                      </Badge>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-1">
+                  {hotspot.shopTypes.slice(0, 3).map((type) => (
+                    <Badge key={type} variant="outline" className="text-xs">
+                      {type}
+                    </Badge>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
       
       {/* Legend */}
       <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur">
