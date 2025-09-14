@@ -1,21 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, DollarSign, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Users, DollarSign, MapPin, Key } from "lucide-react";
 import { Hotspot } from '@/data/mockHotspots';
-import L from 'leaflet';
-
-// Import Leaflet CSS
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 interface HotspotMapProps {
   hotspots: Hotspot[];
@@ -23,48 +14,199 @@ interface HotspotMapProps {
   zoom: number;
 }
 
-const getHotspotColor = (intensity: string) => {
-  switch (intensity) {
-    case 'high': return 'bg-hotspot-high';
-    case 'medium': return 'bg-hotspot-medium';
-    case 'low': return 'bg-hotspot-low';
-    default: return 'bg-muted';
-  }
-};
-
 export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
-  const [isMapReady, setIsMapReady] = useState(false);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
+  const [mapboxToken, setMapboxToken] = useState('');
+  const [isTokenSet, setIsTokenSet] = useState(false);
+  const [tokenError, setTokenError] = useState('');
 
-  useEffect(() => {
-    // Small delay to ensure proper initialization
-    const timer = setTimeout(() => {
-      setIsMapReady(true);
-    }, 100);
+  const handleSetToken = () => {
+    if (!mapboxToken.trim()) {
+      setTokenError('Please enter a valid Mapbox token');
+      return;
+    }
     
-    return () => clearTimeout(timer);
-  }, []);
+    if (!mapboxToken.startsWith('pk.')) {
+      setTokenError('Mapbox public tokens should start with "pk."');
+      return;
+    }
 
-  // Reset map when location changes
-  useEffect(() => {
-    setIsMapReady(false);
-    const timer = setTimeout(() => {
-      setIsMapReady(true);
-    }, 100);
+    setTokenError('');
+    setIsTokenSet(true);
+    mapboxgl.accessToken = mapboxToken;
+  };
+
+  // Clear existing markers
+  const clearMarkers = () => {
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+  };
+
+  // Create hotspot markers
+  const createMarkers = () => {
+    clearMarkers();
     
-    return () => clearTimeout(timer);
-  }, [center]);
+    hotspots.forEach((hotspot) => {
+      // Create marker element
+      const el = document.createElement('div');
+      el.className = 'marker';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.borderRadius = '50%';
+      el.style.cursor = 'pointer';
+      el.style.border = '2px solid white';
+      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      
+      // Set color based on intensity
+      switch (hotspot.intensity) {
+        case 'high':
+          el.style.backgroundColor = '#ef4444'; // red-500
+          break;
+        case 'medium':
+          el.style.backgroundColor = '#f59e0b'; // amber-500
+          break;
+        case 'low':
+          el.style.backgroundColor = '#10b981'; // emerald-500
+          break;
+        default:
+          el.style.backgroundColor = '#6b7280'; // gray-500
+      }
 
-  if (!isMapReady) {
+      // Create popup content
+      const popupContent = `
+        <div style="padding: 12px; min-width: 200px; font-family: system-ui;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+            <h4 style="font-weight: 500; font-size: 14px; margin: 0;">${hotspot.address}</h4>
+            <span style="background: ${hotspot.intensity === 'high' ? '#1f2937' : hotspot.intensity === 'medium' ? '#374151' : 'transparent'}; 
+                         color: ${hotspot.intensity === 'high' ? 'white' : hotspot.intensity === 'medium' ? 'white' : '#374151'}; 
+                         border: ${hotspot.intensity === 'low' ? '1px solid #d1d5db' : 'none'};
+                         padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">
+              ${hotspot.intensity}
+            </span>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center;">
+              <span style="margin-right: 4px;">📈</span>
+              <span>${hotspot.score}/100</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <span style="margin-right: 4px;">👥</span>
+              <span>${(hotspot.footTraffic / 1000).toFixed(0)}k</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <span style="margin-right: 4px;">💰</span>
+              <span>$${(hotspot.avgRent / 1000).toFixed(0)}k</span>
+            </div>
+          </div>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            ${hotspot.shopTypes.slice(0, 3).map(type => 
+              `<span style="background: #f3f4f6; color: #374151; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #e5e7eb;">${type}</span>`
+            ).join('')}
+          </div>
+        </div>
+      `;
+
+      // Create popup
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(popupContent);
+
+      // Create marker
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([hotspot.lng, hotspot.lat])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      markers.current.push(marker);
+    });
+  };
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || !isTokenSet) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [center[1], center[0]], // Mapbox uses [lng, lat]
+      zoom: zoom,
+      antialias: true
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.current.on('load', () => {
+      createMarkers();
+    });
+
+    return () => {
+      clearMarkers();
+      map.current?.remove();
+    };
+  }, [isTokenSet]);
+
+  // Update map when props change
+  useEffect(() => {
+    if (!map.current || !isTokenSet) return;
+
+    map.current.flyTo({
+      center: [center[1], center[0]], // Mapbox uses [lng, lat]
+      zoom: zoom,
+      duration: 1000
+    });
+
+    createMarkers();
+  }, [center, zoom, hotspots, isTokenSet]);
+
+  if (!isTokenSet) {
     return (
       <div className="flex-1 h-full relative">
         <div className="h-full w-full bg-muted rounded-lg flex items-center justify-center">
-          <div className="text-center p-8">
-            <MapPin className="h-16 w-16 text-map-accent mx-auto mb-4 animate-pulse" />
-            <h3 className="text-xl font-semibold mb-2">Loading Map...</h3>
-            <p className="text-muted-foreground">
-              Preparing {hotspots.length} hotspots
-            </p>
-          </div>
+          <Card className="w-96">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Mapbox Setup Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                To display the interactive map, please enter your Mapbox public token.
+              </p>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="pk.your-mapbox-token-here..."
+                  value={mapboxToken}
+                  onChange={(e) => {
+                    setMapboxToken(e.target.value);
+                    setTokenError('');
+                  }}
+                  className="font-mono text-sm"
+                />
+                {tokenError && (
+                  <p className="text-sm text-destructive">{tokenError}</p>
+                )}
+              </div>
+              <Button onClick={handleSetToken} className="w-full">
+                Initialize Map
+              </Button>
+              <div className="text-xs text-muted-foreground">
+                <p>Get your free token at:</p>
+                <a 
+                  href="https://mapbox.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  https://mapbox.com/
+                </a>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -72,66 +214,7 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
   return (
     <div className="flex-1 h-full relative">
-      <div style={{ height: '100%', width: '100%' }} className="rounded-lg overflow-hidden">
-        <MapContainer
-          key={`map-${center[0]}-${center[1]}-${zoom}`}
-          center={center}
-          zoom={zoom}
-          style={{ height: '100%', width: '100%' }}
-          className="z-0"
-          attributionControl={true}
-          zoomControl={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          {hotspots.map((hotspot) => (
-            <Marker
-              key={hotspot.id}
-              position={[hotspot.lat, hotspot.lng]}
-            >
-              <Popup>
-                <div className="p-2 min-w-[200px]">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-sm">{hotspot.address}</h4>
-                    <Badge 
-                      variant={hotspot.intensity === 'high' ? 'default' : hotspot.intensity === 'medium' ? 'secondary' : 'outline'}
-                      className="text-xs ml-2"
-                    >
-                      {hotspot.intensity}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs mb-2">
-                    <div className="flex items-center">
-                      <TrendingUp className="h-3 w-3 mr-1 text-accent" />
-                      <span>{hotspot.score}/100</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-3 w-3 mr-1 text-map-accent" />
-                      <span>{(hotspot.footTraffic / 1000).toFixed(0)}k</span>
-                    </div>
-                    <div className="flex items-center">
-                      <DollarSign className="h-3 w-3 mr-1 text-success" />
-                      <span>${(hotspot.avgRent / 1000).toFixed(0)}k</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1">
-                    {hotspot.shopTypes.slice(0, 3).map((type) => (
-                      <Badge key={type} variant="outline" className="text-xs">
-                        {type}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
+      <div ref={mapContainer} className="absolute inset-0 rounded-lg" />
       
       {/* Legend */}
       <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur">
@@ -139,15 +222,15 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
           <h4 className="text-sm font-semibold mb-2">Hotspot Intensity</h4>
           <div className="space-y-1">
             <div className="flex items-center text-xs">
-              <div className="w-3 h-3 rounded-full mr-2 bg-hotspot-high"></div>
+              <div className="w-3 h-3 rounded-full mr-2 bg-red-500"></div>
               High (90-100)
             </div>
             <div className="flex items-center text-xs">
-              <div className="w-3 h-3 rounded-full mr-2 bg-hotspot-medium"></div>
+              <div className="w-3 h-3 rounded-full mr-2 bg-amber-500"></div>
               Medium (70-89)
             </div>
             <div className="flex items-center text-xs">
-              <div className="w-3 h-3 rounded-full mr-2 bg-hotspot-low"></div>
+              <div className="w-3 h-3 rounded-full mr-2 bg-emerald-500"></div>
               Low (50-69)
             </div>
           </div>
