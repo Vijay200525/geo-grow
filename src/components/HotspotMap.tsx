@@ -1,11 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, DollarSign, MapPin, Key } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Hotspot } from '@/data/mockHotspots';
 
 interface HotspotMapProps {
@@ -18,25 +14,6 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
-  const [mapboxToken, setMapboxToken] = useState('');
-  const [isTokenSet, setIsTokenSet] = useState(false);
-  const [tokenError, setTokenError] = useState('');
-
-  const handleSetToken = () => {
-    if (!mapboxToken.trim()) {
-      setTokenError('Please enter a valid Mapbox token');
-      return;
-    }
-    
-    if (!mapboxToken.startsWith('pk.')) {
-      setTokenError('Mapbox public tokens should start with "pk."');
-      return;
-    }
-
-    setTokenError('');
-    setIsTokenSet(true);
-    mapboxgl.accessToken = mapboxToken;
-  };
 
   // Clear existing markers
   const clearMarkers = () => {
@@ -126,11 +103,35 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !isTokenSet) return;
+    if (!mapContainer.current) return;
 
+    // No API key needed for OpenStreetMap
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: {
+        version: 8,
+        sources: {
+          'openstreetmap': {
+            type: 'raster',
+            tiles: [
+              'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'openstreetmap',
+            type: 'raster',
+            source: 'openstreetmap',
+            minzoom: 0,
+            maxzoom: 22
+          }
+        ]
+      },
       center: [center[1], center[0]], // Mapbox uses [lng, lat]
       zoom: zoom,
       antialias: true
@@ -146,11 +147,11 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       clearMarkers();
       map.current?.remove();
     };
-  }, [isTokenSet]);
+  }, []);
 
   // Update map when props change
   useEffect(() => {
-    if (!map.current || !isTokenSet) return;
+    if (!map.current) return;
 
     map.current.flyTo({
       center: [center[1], center[0]], // Mapbox uses [lng, lat]
@@ -159,58 +160,7 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
     });
 
     createMarkers();
-  }, [center, zoom, hotspots, isTokenSet]);
-
-  if (!isTokenSet) {
-    return (
-      <div className="flex-1 h-full relative">
-        <div className="h-full w-full bg-muted rounded-lg flex items-center justify-center">
-          <Card className="w-96">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5" />
-                Mapbox Setup Required
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                To display the interactive map, please enter your Mapbox public token.
-              </p>
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="pk.your-mapbox-token-here..."
-                  value={mapboxToken}
-                  onChange={(e) => {
-                    setMapboxToken(e.target.value);
-                    setTokenError('');
-                  }}
-                  className="font-mono text-sm"
-                />
-                {tokenError && (
-                  <p className="text-sm text-destructive">{tokenError}</p>
-                )}
-              </div>
-              <Button onClick={handleSetToken} className="w-full">
-                Initialize Map
-              </Button>
-              <div className="text-xs text-muted-foreground">
-                <p>Get your free token at:</p>
-                <a 
-                  href="https://mapbox.com/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  https://mapbox.com/
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  }, [center, zoom, hotspots]);
 
   return (
     <div className="flex-1 h-full relative">
