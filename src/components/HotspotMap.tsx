@@ -1,8 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Card, CardContent } from "@/components/ui/card";
 import { Hotspot } from '@/data/mockHotspots';
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface HotspotMapProps {
   hotspots: Hotspot[];
@@ -12,12 +20,12 @@ interface HotspotMapProps {
 
 export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
+  const map = useRef<L.Map | null>(null);
+  const markers = useRef<L.Marker[]>([]);
 
   // Clear existing markers
   const clearMarkers = () => {
-    markers.current.forEach(marker => marker.remove());
+    markers.current.forEach(marker => map.current?.removeLayer(marker));
     markers.current = [];
   };
 
@@ -26,30 +34,34 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
     clearMarkers();
     
     hotspots.forEach((hotspot) => {
-      // Create marker element
-      const el = document.createElement('div');
-      el.className = 'marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.cursor = 'pointer';
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      
-      // Set color based on intensity
-      switch (hotspot.intensity) {
-        case 'high':
-          el.style.backgroundColor = '#ef4444'; // red-500
-          break;
-        case 'medium':
-          el.style.backgroundColor = '#f59e0b'; // amber-500
-          break;
-        case 'low':
-          el.style.backgroundColor = '#10b981'; // emerald-500
-          break;
-        default:
-          el.style.backgroundColor = '#6b7280'; // gray-500
-      }
+      // Create custom marker based on intensity
+      const getMarkerColor = (intensity: string) => {
+        switch (intensity) {
+          case 'high': return '#ef4444'; // red-500
+          case 'medium': return '#f59e0b'; // amber-500
+          case 'low': return '#10b981'; // emerald-500
+          default: return '#6b7280'; // gray-500
+        }
+      };
+
+      const markerHtml = `
+        <div style="
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: ${getMarkerColor(hotspot.intensity)};
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          cursor: pointer;
+        "></div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: markerHtml,
+        className: 'custom-marker',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
 
       // Create popup content
       const popupContent = `
@@ -87,14 +99,9 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
         </div>
       `;
 
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setHTML(popupContent);
-
       // Create marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([hotspot.lng, hotspot.lat])
-        .setPopup(popup)
+      const marker = L.marker([hotspot.lat, hotspot.lng], { icon: customIcon })
+        .bindPopup(popupContent)
         .addTo(map.current!);
 
       markers.current.push(marker);
@@ -105,50 +112,17 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Set empty token for OpenStreetMap (no API key needed)
-    mapboxgl.accessToken = '';
+    // Create Leaflet map with OpenStreetMap tiles
+    map.current = L.map(mapContainer.current).setView([center[0], center[1]], zoom);
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'openstreetmap': {
-            type: 'raster',
-            tiles: [
-              'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          }
-        },
-        layers: [
-          {
-            id: 'openstreetmap',
-            type: 'raster',
-            source: 'openstreetmap',
-            minzoom: 0,
-            maxzoom: 18
-          }
-        ],
-        glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf"
-      },
-      center: [center[1], center[0]], // Mapbox uses [lng, lat]
-      zoom: zoom,
-      antialias: true,
-      transformRequest: (url, resourceType) => {
-        // Allow OpenStreetMap tiles without authentication
-        if (resourceType === 'Tile' && url.includes('openstreetmap.org')) {
-          return { url };
-        }
-      }
-    });
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map.current);
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    map.current.on('load', () => {
-      createMarkers();
-    });
+    // Create initial markers
+    createMarkers();
 
     return () => {
       clearMarkers();
@@ -160,12 +134,7 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   useEffect(() => {
     if (!map.current) return;
 
-    map.current.flyTo({
-      center: [center[1], center[0]], // Mapbox uses [lng, lat]
-      zoom: zoom,
-      duration: 1000
-    });
-
+    map.current.setView([center[0], center[1]], zoom);
     createMarkers();
   }, [center, zoom, hotspots]);
 
