@@ -105,7 +105,9 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // No API key needed for OpenStreetMap
+    // Set empty token for OpenStreetMap (no API key needed)
+    mapboxgl.accessToken = '';
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: {
@@ -114,9 +116,7 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
           'openstreetmap': {
             type: 'raster',
             tiles: [
-              'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             ],
             tileSize: 256,
             attribution: '© OpenStreetMap contributors'
@@ -128,13 +128,20 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
             type: 'raster',
             source: 'openstreetmap',
             minzoom: 0,
-            maxzoom: 22
+            maxzoom: 18
           }
-        ]
+        ],
+        glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf"
       },
       center: [center[1], center[0]], // Mapbox uses [lng, lat]
       zoom: zoom,
-      antialias: true
+      antialias: true,
+      transformRequest: (url, resourceType) => {
+        // Allow OpenStreetMap tiles without authentication
+        if (resourceType === 'Tile' && url.includes('openstreetmap.org')) {
+          return { url };
+        }
+      }
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
