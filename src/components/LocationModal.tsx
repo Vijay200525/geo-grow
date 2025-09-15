@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,22 @@ interface LocationModalProps {
   onLocationSet: (lat: number, lng: number, address: string) => void;
 }
 
+interface LocationSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+  type: string;
+}
+
 export const LocationModal = ({ isOpen, onLocationSet }: LocationModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
+  const debounceRef = useRef<NodeJS.Timeout>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -66,18 +78,104 @@ export const LocationModal = ({ isOpen, onLocationSet }: LocationModalProps) => 
     }
   };
 
+  const fetchSuggestions = async (query: string) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // Filter out queries that look like zipcodes (5 digits or 5+4 format)
+    if (/^\d{5}(-?\d{4})?$/.test(query.trim())) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsFetching(true);
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}&countrycodes=us&addressdetails=1&extratags=1`
+      );
+      
+      if (!response.ok) throw new Error('Failed to fetch suggestions');
+      
+      const data: LocationSuggestion[] = await response.json();
+      
+      // Filter to only include cities, towns, and addresses (not zipcodes or POIs)
+      const filtered = data.filter(item => {
+        const type = item.type;
+        const displayName = item.display_name.toLowerCase();
+        return (
+          (type === 'city' || type === 'town' || type === 'village' || 
+           type === 'suburb' || type === 'neighbourhood' || type === 'house') &&
+          !displayName.includes('zip') &&
+          !displayName.includes('postal')
+        );
+      });
+      
+      setSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setManualAddress(value);
+    
+    // Clear existing timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    // Set new timeout for debounced search
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+  };
+
+  const handleSuggestionClick = (suggestion: LocationSuggestion) => {
+    const lat = parseFloat(suggestion.lat);
+    const lng = parseFloat(suggestion.lon);
+    
+    onLocationSet(lat, lng, suggestion.display_name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    
+    toast({
+      title: "Location set",
+      description: `Using "${suggestion.display_name}" for hotspot analysis.`,
+    });
+  };
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualAddress.trim()) return;
 
-    // For demo purposes, we'll use NYC coordinates for any manual address
-    // In a real app, you'd geocode the address
-    onLocationSet(40.7589, -73.9851, manualAddress);
-    toast({
-      title: "Location set",
-      description: `Using "${manualAddress}" for hotspot analysis.`,
-    });
+    // If there are suggestions, use the first one
+    if (suggestions.length > 0) {
+      handleSuggestionClick(suggestions[0]);
+      return;
+    }
+
+    // Otherwise, try to geocode manually
+    fetchSuggestions(manualAddress);
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -126,16 +224,40 @@ export const LocationModal = ({ isOpen, onLocationSet }: LocationModalProps) => 
 
           {/* Manual entry section */}
           <form onSubmit={handleManualSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="address">Enter Address Manually</Label>
+            <div className="relative">
+              <Label htmlFor="address">Enter Address or City</Label>
               <Input
+                ref={inputRef}
                 id="address"
                 type="text"
-                placeholder="Enter city, address, or ZIP code"
+                placeholder="Enter city or address (no zip codes)"
                 value={manualAddress}
-                onChange={(e) => setManualAddress(e.target.value)}
+                onChange={handleInputChange}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 className="w-full"
               />
+              
+              {/* Suggestions dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0"
+                    >
+                      {suggestion.display_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {isFetching && (
+                <div className="absolute right-3 top-8 flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
             
             <Button 
