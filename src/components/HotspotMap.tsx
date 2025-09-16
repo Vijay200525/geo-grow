@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,13 +24,13 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
   const markers = useRef<L.Marker[]>([]);
 
   // Clear existing markers
-  const clearMarkers = () => {
+  const clearMarkers = useCallback(() => {
     markers.current.forEach(marker => map.current?.removeLayer(marker));
     markers.current = [];
-  };
+  }, []);
 
   // Create hotspot markers
-  const createMarkers = () => {
+  const createMarkers = useCallback(() => {
     clearMarkers();
     
     hotspots.forEach((hotspot) => {
@@ -46,10 +46,11 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
       const markerHtml = `
         <div style="
-          width: 20px;
-          height: 20px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           background-color: ${getMarkerColor(hotspot.intensity)};
+          opacity: 0.7;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           cursor: pointer;
@@ -59,8 +60,8 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       const customIcon = L.divIcon({
         html: markerHtml,
         className: 'custom-marker',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
       });
 
       // Create popup content
@@ -106,11 +107,11 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
       markers.current.push(marker);
     });
-  };
+  }, [hotspots, clearMarkers]);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || map.current) return;
 
     // Create Leaflet map with OpenStreetMap tiles
     map.current = L.map(mapContainer.current).setView([center[0], center[1]], zoom);
@@ -121,22 +122,26 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       maxZoom: 19
     }).addTo(map.current);
 
-    // Create initial markers
-    createMarkers();
-
     return () => {
       clearMarkers();
-      map.current?.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
-  }, []);
+  }, [clearMarkers]);
 
-  // Update map when props change
+  // Create markers when hotspots change
   useEffect(() => {
     if (!map.current) return;
-
-    map.current.setView([center[0], center[1]], zoom);
     createMarkers();
-  }, [center, zoom, hotspots]);
+  }, [createMarkers]);
+
+  // Update map view when center or zoom changes
+  useEffect(() => {
+    if (!map.current) return;
+    map.current.setView([center[0], center[1]], zoom);
+  }, [center, zoom]);
 
   return (
     <div className="flex-1 h-full relative">
