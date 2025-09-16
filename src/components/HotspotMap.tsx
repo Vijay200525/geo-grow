@@ -46,13 +46,12 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
       const markerHtml = `
         <div style="
-          width: 32px;
-          height: 32px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           background-color: ${getMarkerColor(hotspot.intensity)};
-          opacity: 0.7;
-          border: 3px solid white;
-          box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           cursor: pointer;
         "></div>
       `;
@@ -60,8 +59,8 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       const customIcon = L.divIcon({
         html: markerHtml,
         className: 'custom-marker',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
       });
 
       // Create popup content
