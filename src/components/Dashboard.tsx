@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FilterSidebar } from "./FilterSidebar";
 import { HotspotMap } from "./HotspotMap";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { Hotspot, getHotspotsByFilters } from "@/data/mockHotspots";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,9 +13,10 @@ interface DashboardProps {
     address: string;
   };
   onBack: () => void;
+  onChangeLocation: () => void;
 }
 
-export const Dashboard = ({ userLocation, onBack }: DashboardProps) => {
+export const Dashboard = ({ userLocation, onBack, onChangeLocation }: DashboardProps) => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [radius, setRadius] = useState(5);
   const [maxHotspots, setMaxHotspots] = useState(20);
@@ -97,9 +98,20 @@ export const Dashboard = ({ userLocation, onBack }: DashboardProps) => {
             </div>
           </div>
           
-          <div className="text-right">
-            <p className="text-sm font-medium">Location</p>
-            <p className="text-xs text-muted-foreground">{userLocation.address}</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm font-medium">Location</p>
+              <p className="text-xs text-muted-foreground">{userLocation.address}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onChangeLocation}
+              className="flex items-center gap-2"
+            >
+              <MapPin className="h-4 w-4" />
+              Change
+            </Button>
           </div>
         </header>
         

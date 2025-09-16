@@ -19,6 +19,7 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<{display_name?: string} | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +28,15 @@ const Index = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Fetch user profile if logged in
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setUserProfile(null);
+        }
         
         // If user just logged in, redirect to location selection
         if (event === 'SIGNED_IN' && session) {
@@ -37,6 +47,7 @@ const Index = () => {
         if (event === 'SIGNED_OUT') {
           setAppState('landing');
           setUserLocation(null);
+          setUserProfile(null);
         }
       }
     );
@@ -45,6 +56,11 @@ const Index = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Fetch user profile if logged in
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
       
       // If user is already logged in, show location or dashboard
       if (session) {
@@ -58,6 +74,25 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [userLocation]);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+      
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const handleLogin = () => {
     navigate('/auth/login');
@@ -84,11 +119,16 @@ const Index = () => {
     setUserLocation(null);
   };
 
+  const handleChangeLocation = () => {
+    setAppState('location');
+  };
+
   if (appState === 'dashboard' && userLocation) {
     return (
       <Dashboard
         userLocation={userLocation}
         onBack={handleBackToLanding}
+        onChangeLocation={handleChangeLocation}
       />
     );
   }
@@ -99,6 +139,8 @@ const Index = () => {
         onLogin={handleLogin}
         onRegister={handleRegister}
         onGuest={handleGuest}
+        user={user}
+        userProfile={userProfile}
       />
       
       <LocationModal
