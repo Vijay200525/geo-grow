@@ -3,15 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LocationModalProps {
   isOpen: boolean;
   onLocationSet: (lat: number, lng: number, address: string) => void;
+  onClose: () => void;
 }
 
-export const LocationModal = ({ isOpen, onLocationSet }: LocationModalProps) => {
+export const LocationModal = ({ isOpen, onLocationSet, onClose }: LocationModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
   const { toast } = useToast();
@@ -82,7 +83,15 @@ export const LocationModal = ({ isOpen, onLocationSet }: LocationModalProps) => 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="absolute right-0 top-0 h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
           <div className="flex items-center justify-center mb-2">
             <MapPin className="h-8 w-8 text-accent" />
           </div>

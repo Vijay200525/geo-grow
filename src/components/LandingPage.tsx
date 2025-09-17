@@ -88,31 +88,43 @@ export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile }:
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-            <Button 
-              onClick={onLogin}
-              variant="secondary"
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              Login
-            </Button>
-            
-            <Button 
-              onClick={onRegister}
-              className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
-              size="lg"
-            >
-              Get Started
-            </Button>
-            
-            <Button 
-              onClick={onGuest}
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              Try as Guest
-            </Button>
+            {user ? (
+              <Button 
+                onClick={onGuest}
+                className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
+                size="lg"
+              >
+                Find Hotspots
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  onClick={onLogin}
+                  variant="secondary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
+                  Login
+                </Button>
+                
+                <Button 
+                  onClick={onRegister}
+                  className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
+                  size="lg"
+                >
+                  Get Started
+                </Button>
+                
+                <Button 
+                  onClick={onGuest}
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                >
+                  Try as Guest
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

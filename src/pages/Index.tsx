@@ -146,6 +146,7 @@ const Index = () => {
       <LocationModal
         isOpen={appState === 'location'}
         onLocationSet={handleLocationSet}
+        onClose={handleBackToLanding}
       />
     </>
   );
