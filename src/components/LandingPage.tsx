@@ -77,58 +77,6 @@ export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile }:
           </Card>
         </div>
 
-        {/* Service Connections */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-center mb-8">Platform Integrations</h2>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card className="bg-gradient-card border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-card-foreground">
-                  <Database className="h-6 w-6 text-accent" />
-                  Supabase Database
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Connected
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Real-time database and authentication powered by Supabase
-                </p>
-                <div className="text-sm text-muted-foreground">
-                  Project: <span className="font-mono text-accent">rhnrlfobskkebvwbsiiv</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-card border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-card-foreground">
-                  <Github className="h-6 w-6 text-accent" />
-                  GitHub Integration
-                  <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground">
-                    Available
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Version control and collaborative development
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
-                  onClick={() => window.open('https://docs.lovable.dev/github-integration', '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Connect GitHub
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
         {/* CTA Section */}
         <div className="text-center">
