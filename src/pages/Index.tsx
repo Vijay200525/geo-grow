@@ -119,6 +119,16 @@ const Index = () => {
     setUserLocation(null);
   };
 
+  const handleBackToLandingWithoutLogout = () => {
+    setAppState('landing');
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setAppState('landing');
+    setUserLocation(null);
+  };
+
   const handleChangeLocation = () => {
     setAppState('location');
   };
@@ -141,12 +151,13 @@ const Index = () => {
         onGuest={handleGuest}
         user={user}
         userProfile={userProfile}
+        onLogout={handleLogout}
       />
       
       <LocationModal
         isOpen={appState === 'location'}
         onLocationSet={handleLocationSet}
-        onClose={handleBackToLanding}
+        onClose={handleBackToLandingWithoutLogout}
       />
     </>
   );

@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, TrendingUp, Target, Users, Database, Github, CheckCircle, ExternalLink, User } from "lucide-react";
+import { MapPin, TrendingUp, Target, Users, Database, Github, CheckCircle, ExternalLink, User, LogOut } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -10,20 +11,38 @@ interface LandingPageProps {
   onGuest: () => void;
   user: SupabaseUser | null;
   userProfile: { display_name?: string } | null;
+  onLogout: () => void;
 }
 
-export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile }: LandingPageProps) => {
+export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile, onLogout }: LandingPageProps) => {
   return (
     <div className="min-h-screen bg-gradient-hero text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
         {/* User Status */}
         <div className="absolute top-4 right-4">
-          <div className="flex items-center gap-2 bg-card/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
-            <User className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium">
-              {user && userProfile?.display_name ? userProfile.display_name : 'Guest'}
-            </span>
-          </div>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 bg-card/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20 hover:bg-card/20">
+                  <User className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium">
+                    {userProfile?.display_name || 'User'}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2 bg-card/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+              <User className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium">Guest</span>
+            </div>
+          )}
         </div>
         
         {/* Header */}
