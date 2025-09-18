@@ -49,7 +49,7 @@ export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile, o
         <header className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">
             <MapPin className="h-12 w-12 text-accent mr-3" />
-            <h1 className="text-5xl font-bold">HotspotPro</h1>
+            <h1 className="text-5xl font-bold">HotspotsNearMe</h1>
           </div>
           <p className="text-xl text-primary-foreground/80 max-w-2xl mx-auto">
             Discover the perfect location for your next business venture with AI-powered 
@@ -102,7 +102,7 @@ export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile, o
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Location?</h2>
             <p className="text-lg text-primary-foreground/80">
-              Join thousands of successful business owners who use HotspotPro
+              Join thousands of successful business owners who use HotspotsNearMe
             </p>
           </div>
 
