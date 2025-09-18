@@ -136,9 +136,9 @@ export const LandingPage = ({ onLogin, onRegister, onGuest, user, userProfile, o
                 
                 <Button 
                   onClick={onGuest}
-                  variant="outline"
+                  variant="hero"
                   size="lg"
-                  className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10 hover:text-white"
+                  className="w-full sm:w-auto"
                 >
                   Try as Guest
                 </Button>
