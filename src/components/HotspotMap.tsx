@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Card, CardContent } from "@/components/ui/card";
-import { Hotspot } from '@/data/mockHotspots';
+import { Hotspot } from '@/types/hotspot';
 
 // Fix for default markers in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -34,6 +34,15 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
     clearMarkers();
     
     hotspots.forEach((hotspot) => {
+      // Determine intensity based on score
+      const getIntensity = (score: number): 'high' | 'medium' | 'low' => {
+        if (score >= 900) return 'high';
+        if (score >= 700) return 'medium';
+        return 'low';
+      };
+
+      const intensity = getIntensity(hotspot.score);
+
       // Create custom marker based on intensity
       const getMarkerColor = (intensity: string) => {
         switch (intensity) {
@@ -49,7 +58,7 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
           width: 30px;
           height: 30px;
           border-radius: 50%;
-          background-color: ${getMarkerColor(hotspot.intensity)};
+          background-color: ${getMarkerColor(intensity)};
           opacity: 0.7;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -66,36 +75,32 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
       // Create popup content
       const popupContent = `
-        <div style="padding: 12px; min-width: 200px; font-family: system-ui;">
+        <div style="padding: 12px; min-width: 220px; font-family: system-ui;">
           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-            <h4 style="font-weight: 500; font-size: 14px; margin: 0;">${hotspot.address}</h4>
-            <span style="background: ${hotspot.intensity === 'high' ? '#1f2937' : hotspot.intensity === 'medium' ? '#374151' : 'transparent'}; 
-                         color: ${hotspot.intensity === 'high' ? 'white' : hotspot.intensity === 'medium' ? 'white' : '#374151'}; 
-                         border: ${hotspot.intensity === 'low' ? '1px solid #d1d5db' : 'none'};
+            <h4 style="font-weight: 600; font-size: 14px; margin: 0; color: #1f2937;">${hotspot.businessType}</h4>
+            <span style="background: ${intensity === 'high' ? '#1f2937' : intensity === 'medium' ? '#374151' : 'transparent'}; 
+                         color: ${intensity === 'high' ? 'white' : intensity === 'medium' ? 'white' : '#374151'}; 
+                         border: ${intensity === 'low' ? '1px solid #d1d5db' : 'none'};
                          padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">
-              ${hotspot.intensity}
+              ${intensity}
             </span>
           </div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center;">
-              <span style="margin-right: 4px;">📈</span>
-              <span>${hotspot.score}/100</span>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <span style="margin-right: 4px;">👥</span>
-              <span>${(hotspot.footTraffic / 1000).toFixed(0)}k</span>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <span style="margin-right: 4px;">💰</span>
-              <span>$${(hotspot.avgRent / 1000).toFixed(0)}k</span>
+          <div style="background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px; font-size: 12px;">
+              <span style="color: #6b7280; font-weight: 500;">Cell ID:</span>
+              <span style="color: #1f2937; font-weight: 600;">${hotspot.id}</span>
+              
+              <span style="color: #6b7280; font-weight: 500;">Score:</span>
+              <span style="color: #1f2937; font-weight: 600;">${hotspot.score.toFixed(1)} / 1000</span>
+              
+              <span style="color: #6b7280; font-weight: 500;">Rank:</span>
+              <span style="color: #1f2937; font-weight: 600;">#${hotspot.rank}</span>
             </div>
           </div>
           
-          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-            ${hotspot.shopTypes.slice(0, 3).map(type => 
-              `<span style="background: #f3f4f6; color: #374151; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #e5e7eb;">${type}</span>`
-            ).join('')}
+          <div style="font-size: 11px; color: #6b7280;">
+            <span>📍 ${hotspot.lat.toFixed(4)}, ${hotspot.lng.toFixed(4)}</span>
           </div>
         </div>
       `;
@@ -150,19 +155,19 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       {/* Legend */}
       <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur">
         <CardContent className="p-3">
-          <h4 className="text-sm font-semibold mb-2">Hotspot Intensity</h4>
+          <h4 className="text-sm font-semibold mb-2">Score Range</h4>
           <div className="space-y-1">
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-red-500"></div>
-              High (90-100)
+              High (900-1000)
             </div>
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-amber-500"></div>
-              Medium (70-89)
+              Medium (700-899)
             </div>
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-emerald-500"></div>
-              Low (50-69)
+              Low (&lt;700)
             </div>
           </div>
         </CardContent>

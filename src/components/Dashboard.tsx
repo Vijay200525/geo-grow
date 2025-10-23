@@ -3,7 +3,8 @@ import { FilterSidebar } from "./FilterSidebar";
 import { HotspotMap } from "./HotspotMap";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { Hotspot, getHotspotsByFilters } from "@/data/mockHotspots";
+import { Hotspot, BusinessType } from "@/types/hotspot";
+import { fetchHotspotsByFilters } from "@/services/hotspotService";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
@@ -17,7 +18,7 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ userLocation, onBack, onChangeLocation }: DashboardProps) => {
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<BusinessType[]>([]);
   const [radius, setRadius] = useState(5);
   const [maxHotspots, setMaxHotspots] = useState(20);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
@@ -33,10 +34,7 @@ export const Dashboard = ({ userLocation, onBack, onChangeLocation }: DashboardP
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const filteredHotspots = getHotspotsByFilters(
+      const filteredHotspots = await fetchHotspotsByFilters(
         userLocation.lat,
         userLocation.lng,
         radius,

@@ -6,13 +6,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Filter, MapPin } from "lucide-react";
-import { shopTypes } from "@/data/mockHotspots";
+import { BUSINESS_TYPES } from "@/types/hotspot";
+
+import { BusinessType } from "@/types/hotspot";
 
 interface FilterSidebarProps {
-  selectedTypes: string[];
+  selectedTypes: BusinessType[];
   radius: number;
   maxHotspots: number;
-  onTypesChange: (types: string[]) => void;
+  onTypesChange: (types: BusinessType[]) => void;
   onRadiusChange: (radius: number) => void;
   onMaxHotspotsChange: (max: number) => void;
   onApplyFilters: () => void;
@@ -32,7 +34,7 @@ export const FilterSidebar = ({
   const [localRadius, setLocalRadius] = useState(radius);
   const [localMaxHotspots, setLocalMaxHotspots] = useState(maxHotspots);
 
-  const handleTypeToggle = (type: string) => {
+  const handleTypeToggle = (type: BusinessType) => {
     const updated = selectedTypes.includes(type)
       ? selectedTypes.filter(t => t !== type)
       : [...selectedTypes, type];
@@ -70,7 +72,7 @@ export const FilterSidebar = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0 space-y-3">
-            {shopTypes.map((type) => (
+            {BUSINESS_TYPES.map((type) => (
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox
                   id={type}
@@ -92,7 +94,7 @@ export const FilterSidebar = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onTypesChange(shopTypes)}
+                onClick={() => onTypesChange([...BUSINESS_TYPES])}
                 className="flex-1"
               >
                 Select All
