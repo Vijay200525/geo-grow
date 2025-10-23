@@ -25,12 +25,19 @@ export const Dashboard = ({ userLocation, onBack, onChangeLocation }: DashboardP
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Load initial hotspots
-  useEffect(() => {
-    handleApplyFilters();
-  }, []);
+  // Don't load initial hotspots - require user to select types first
 
   const handleApplyFilters = async () => {
+    // Validate that at least one business type is selected
+    if (selectedTypes.length === 0) {
+      toast({
+        title: "No business type selected",
+        description: "Please select at least one business type to view hotspots.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
