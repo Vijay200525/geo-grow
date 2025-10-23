@@ -4,7 +4,7 @@ export interface Hotspot {
   lng: number;
   score: number; // Score_0_1000
   rank: number;
-  businessType: string; // Hotel, Bakery, etc.
+  businessType: BusinessType; // Hotel, Bakery, etc.
 }
 
 export const BUSINESS_TYPES = [

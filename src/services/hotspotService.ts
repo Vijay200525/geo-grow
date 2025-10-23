@@ -52,17 +52,32 @@ export async function fetchHotspotsByFilters(
         continue;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
         // Map the data to Hotspot format, handling different column name variations
-        const hotspots: Hotspot[] = data.map((row: any) => ({
-          id: (row.CellID || row.CelID || row.CellD)?.toString() || 'unknown',
-          lat: row.Lat,
-          lng: row.Lon,
-          score: row.Score_0_1000 || 0,
-          rank: row.Rank || 0,
-          businessType
-        })).filter((hotspot: Hotspot) => {
-          // Filter by radius
+        const mappedData = data
+          .map((row: any) => {
+            // Handle different cell ID column names
+            const cellId = row.CellID || row.CelID || row.CellD;
+            
+            // Skip rows with missing required data
+            if (!cellId || !row.Lat || !row.Lon) {
+              console.warn(`Skipping row with missing data in ${businessType}:`, row);
+              return null;
+            }
+
+            return {
+              id: cellId.toString(),
+              lat: Number(row.Lat),
+              lng: Number(row.Lon),
+              score: Number(row.Score_0_1000) || 0,
+              rank: Number(row.Rank) || 0,
+              businessType
+            };
+          })
+          .filter((item: any): item is Hotspot => item !== null);
+
+        // Filter by radius
+        const hotspots = mappedData.filter((hotspot) => {
           const distance = calculateDistance(
             centerLat,
             centerLng,
@@ -72,7 +87,10 @@ export async function fetchHotspotsByFilters(
           return distance <= radiusKm;
         });
 
+        console.log(`Fetched ${hotspots.length} ${businessType} hotspots within ${radiusKm}km radius`);
         allHotspots.push(...hotspots);
+      } else {
+        console.log(`No data found in ${businessType} table`);
       }
     } catch (err) {
       console.error(`Error processing ${businessType}:`, err);
