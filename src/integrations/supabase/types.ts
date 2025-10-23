@@ -14,6 +14,171 @@ export type Database = {
   }
   public: {
     Tables: {
+      Bakery: {
+        Row: {
+          apartments: number | null
+          bakeries: string | null
+          CelID: number
+          Lat: number | null
+          Lon: number | null
+          offices: number | null
+          Rank: number | null
+          RawScore: number | null
+          schools: number | null
+          Score_0_1000: number | null
+          supermarkets: string | null
+          tourist_places: number | null
+        }
+        Insert: {
+          apartments?: number | null
+          bakeries?: string | null
+          CelID: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
+          tourist_places?: number | null
+        }
+        Update: {
+          apartments?: number | null
+          bakeries?: string | null
+          CelID?: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
+          tourist_places?: number | null
+        }
+        Relationships: []
+      }
+      Clothing: {
+        Row: {
+          apartments: number | null
+          CelID: number
+          clothing_shops: string | null
+          Lat: number | null
+          Lon: number | null
+          Rank: number | null
+          RawScore: number | null
+          Score_0_1000: number | null
+          supermarkets: string | null
+          tourist_places: number | null
+        }
+        Insert: {
+          apartments?: number | null
+          CelID: number
+          clothing_shops?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
+          tourist_places?: number | null
+        }
+        Update: {
+          apartments?: number | null
+          CelID?: number
+          clothing_shops?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
+          tourist_places?: number | null
+        }
+        Relationships: []
+      }
+      Hardware: {
+        Row: {
+          apartments: number | null
+          CellD: number
+          hardware_shops: string | null
+          Lat: number | null
+          Lon: number | null
+          offices: number | null
+          Rank: number | null
+          RawScore: number | null
+          schools: number | null
+          Score_0_1000: number | null
+        }
+        Insert: {
+          apartments?: number | null
+          CellD: number
+          hardware_shops?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+        }
+        Update: {
+          apartments?: number | null
+          CellD?: number
+          hardware_shops?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+        }
+        Relationships: []
+      }
+      Hotel: {
+        Row: {
+          CelID: number
+          hardware_shops: string | null
+          hotels: string | null
+          Lat: number | null
+          Lon: number | null
+          offices: number | null
+          Rank: number | null
+          RawScore: number | null
+          schools: number | null
+          Score_0_1000: number | null
+          tourist_places: number | null
+        }
+        Insert: {
+          CelID: number
+          hardware_shops?: string | null
+          hotels?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          tourist_places?: number | null
+        }
+        Update: {
+          CelID?: number
+          hardware_shops?: string | null
+          hotels?: string | null
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          tourist_places?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -38,39 +203,78 @@ export type Database = {
         }
         Relationships: []
       }
-      restaurants: {
+      Stationery: {
         Row: {
-          cell_id: string
-          created_at: string
-          id: string
-          lat: number
-          long: number
-          rank: number
-          raw_score: number
-          score: number
-          updated_at: string
+          apartments: number | null
+          CelID: number
+          Lat: number | null
+          Lon: number | null
+          offices: number | null
+          Rank: number | null
+          RawScore: number | null
+          schools: number | null
+          Score_0_1000: number | null
+          stationery_shops: string | null
         }
         Insert: {
-          cell_id: string
-          created_at?: string
-          id?: string
-          lat: number
-          long: number
-          rank: number
-          raw_score: number
-          score: number
-          updated_at?: string
+          apartments?: number | null
+          CelID: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          stationery_shops?: string | null
         }
         Update: {
-          cell_id?: string
-          created_at?: string
-          id?: string
-          lat?: number
-          long?: number
-          rank?: number
-          raw_score?: number
-          score?: number
-          updated_at?: string
+          apartments?: number | null
+          CelID?: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          schools?: number | null
+          Score_0_1000?: number | null
+          stationery_shops?: string | null
+        }
+        Relationships: []
+      }
+      Supermarket: {
+        Row: {
+          apartments: number | null
+          CellD: number
+          Lat: number | null
+          Lon: number | null
+          offices: number | null
+          Rank: number | null
+          RawScore: number | null
+          Score_0_1000: number | null
+          supermarkets: string | null
+        }
+        Insert: {
+          apartments?: number | null
+          CellD: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
+        }
+        Update: {
+          apartments?: number | null
+          CellD?: number
+          Lat?: number | null
+          Lon?: number | null
+          offices?: number | null
+          Rank?: number | null
+          RawScore?: number | null
+          Score_0_1000?: number | null
+          supermarkets?: string | null
         }
         Relationships: []
       }

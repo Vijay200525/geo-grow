@@ -34,14 +34,14 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
     clearMarkers();
     
     hotspots.forEach((hotspot) => {
-      // Determine intensity based on score
-      const getIntensity = (score: number): 'high' | 'medium' | 'low' => {
-        if (score >= 900) return 'high';
-        if (score >= 700) return 'medium';
+      // Determine intensity based on rank
+      const getIntensity = (rank: number): 'high' | 'medium' | 'low' => {
+        if (rank >= 1 && rank <= 97) return 'high';
+        if (rank >= 98 && rank <= 323) return 'medium';
         return 'low';
       };
 
-      const intensity = getIntensity(hotspot.score);
+      const intensity = getIntensity(hotspot.rank);
 
       // Create custom marker based on intensity
       const getMarkerColor = (intensity: string) => {
@@ -75,32 +75,12 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
 
       // Create popup content
       const popupContent = `
-        <div style="padding: 12px; min-width: 220px; font-family: system-ui;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-            <h4 style="font-weight: 600; font-size: 14px; margin: 0; color: #1f2937;">${hotspot.businessType}</h4>
-            <span style="background: ${intensity === 'high' ? '#1f2937' : intensity === 'medium' ? '#374151' : 'transparent'}; 
-                         color: ${intensity === 'high' ? 'white' : intensity === 'medium' ? 'white' : '#374151'}; 
-                         border: ${intensity === 'low' ? '1px solid #d1d5db' : 'none'};
-                         padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">
-              ${intensity}
-            </span>
-          </div>
+        <div style="padding: 16px; min-width: 200px; font-family: system-ui; text-align: center;">
+          <h4 style="font-weight: 600; font-size: 16px; margin: 0 0 12px 0; color: #1f2937;">${hotspot.businessType}</h4>
           
-          <div style="background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px; font-size: 12px;">
-              <span style="color: #6b7280; font-weight: 500;">Cell ID:</span>
-              <span style="color: #1f2937; font-weight: 600;">${hotspot.id}</span>
-              
-              <span style="color: #6b7280; font-weight: 500;">Score:</span>
-              <span style="color: #1f2937; font-weight: 600;">${hotspot.score.toFixed(1)} / 1000</span>
-              
-              <span style="color: #6b7280; font-weight: 500;">Rank:</span>
-              <span style="color: #1f2937; font-weight: 600;">#${hotspot.rank}</span>
-            </div>
-          </div>
-          
-          <div style="font-size: 11px; color: #6b7280;">
-            <span>📍 ${hotspot.lat.toFixed(4)}, ${hotspot.lng.toFixed(4)}</span>
+          <div style="background: ${getMarkerColor(intensity)}; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 14px; color: white; font-weight: 500; margin-bottom: 4px;">Rank</div>
+            <div style="font-size: 32px; color: white; font-weight: 700;">#${hotspot.rank}</div>
           </div>
         </div>
       `;
@@ -155,19 +135,19 @@ export const HotspotMap = ({ hotspots, center, zoom }: HotspotMapProps) => {
       {/* Legend */}
       <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur">
         <CardContent className="p-3">
-          <h4 className="text-sm font-semibold mb-2">Score Range</h4>
+          <h4 className="text-sm font-semibold mb-2">Rank Range</h4>
           <div className="space-y-1">
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-red-500"></div>
-              High (900-1000)
+              High (1-97)
             </div>
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-amber-500"></div>
-              Medium (700-899)
+              Medium (98-323)
             </div>
             <div className="flex items-center text-xs">
               <div className="w-3 h-3 rounded-full mr-2 bg-emerald-500"></div>
-              Low (&lt;700)
+              Low (324-646)
             </div>
           </div>
         </CardContent>

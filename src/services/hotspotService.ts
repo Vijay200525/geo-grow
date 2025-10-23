@@ -56,17 +56,14 @@ export async function fetchHotspotsByFilters(
         // Map the data to Hotspot format, handling different column name variations
         const mappedData = data
           .map((row: any) => {
-            // Handle different cell ID column names
-            const cellId = row.CellID || row.CelID || row.CellD;
-            
             // Skip rows with missing required data
-            if (!cellId || !row.Lat || !row.Lon) {
+            if (!row.CellID || !row.Lat || !row.Lon) {
               console.warn(`Skipping row with missing data in ${businessType}:`, row);
               return null;
             }
 
             return {
-              id: cellId.toString(),
+              id: row.CellID.toString(),
               lat: Number(row.Lat),
               lng: Number(row.Lon),
               score: Number(row.Score_0_1000) || 0,
