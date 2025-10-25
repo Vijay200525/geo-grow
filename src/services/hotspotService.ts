@@ -28,6 +28,7 @@ export async function fetchHotspotsByFilters(
   selectedTypes: BusinessType[],
   maxResults: number
 ): Promise<Hotspot[]> {
+  console.log('fetchHotspotsByFilters called with:', { centerLat, centerLng, radiusKm, selectedTypes, maxResults });
   const allHotspots: Hotspot[] = [];
   
   // If no types selected, fetch all types
@@ -39,13 +40,18 @@ export async function fetchHotspotsByFilters(
     'Stationery',
     'Clothing'
   ];
+  
+  console.log('Types to fetch:', typesToFetch);
 
   // Fetch data from each selected table
   for (const businessType of typesToFetch) {
     try {
+      console.log(`Fetching ${businessType} data...`);
       const { data, error } = await supabase
         .from(businessType as any)
         .select('*');
+
+      console.log(`${businessType} response:`, { data: data?.length, error });
 
       if (error) {
         console.error(`Error fetching ${businessType}:`, error);
@@ -95,7 +101,10 @@ export async function fetchHotspotsByFilters(
   }
 
   // Sort by score (descending) and return top results
-  return allHotspots
+  console.log(`Total hotspots found: ${allHotspots.length}`);
+  const results = allHotspots
     .sort((a, b) => b.score - a.score)
     .slice(0, maxResults);
+  console.log(`Returning ${results.length} hotspots`);
+  return results;
 }
