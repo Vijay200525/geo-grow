@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Filter, MapPin } from "lucide-react";
 import { BUSINESS_TYPES } from "@/types/hotspot";
 
@@ -35,10 +34,7 @@ export const FilterSidebar = ({
   const [localMaxHotspots, setLocalMaxHotspots] = useState(maxHotspots);
 
   const handleTypeToggle = (type: BusinessType) => {
-    const updated = selectedTypes.includes(type)
-      ? selectedTypes.filter(t => t !== type)
-      : [...selectedTypes, type];
-    onTypesChange(updated);
+    onTypesChange([type]);
   };
 
   const handleApply = () => {
@@ -71,43 +67,23 @@ export const FilterSidebar = ({
               Business Types
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            {BUSINESS_TYPES.map((type) => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox
-                  id={type}
-                  checked={selectedTypes.includes(type)}
-                  onCheckedChange={() => handleTypeToggle(type)}
-                />
-                <Label
-                  htmlFor={type}
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  {type}
-                </Label>
-              </div>
-            ))}
-            
-            <Separator className="my-3" />
-            
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onTypesChange([...BUSINESS_TYPES])}
-                className="flex-1"
-              >
-                Select All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onTypesChange([])}
-                className="flex-1"
-              >
-                Clear All
-              </Button>
-            </div>
+          <CardContent className="pt-0">
+            <RadioGroup
+              value={selectedTypes[0]}
+              onValueChange={(value) => handleTypeToggle(value as BusinessType)}
+            >
+              {BUSINESS_TYPES.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <RadioGroupItem value={type} id={type} />
+                  <Label
+                    htmlFor={type}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {type}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </CardContent>
         </Card>
 
@@ -163,7 +139,7 @@ export const FilterSidebar = ({
         <Card className="bg-muted/50">
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground space-y-1">
-              <p>Selected: {selectedTypes.length} business types</p>
+              <p>Selected: {selectedTypes[0] || 'None'}</p>
               <p>Radius: {localRadius} km</p>
               <p>Max results: {localMaxHotspots}</p>
             </div>
