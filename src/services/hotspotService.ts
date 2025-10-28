@@ -82,16 +82,21 @@ export async function fetchHotspotsByFilters(
           })
           .filter((item: any): item is Hotspot => item !== null);
 
-        // Filter by radius
-        const hotspots = mappedData.filter((hotspot) => {
-          const distance = calculateDistance(
-            centerLat,
-            centerLng,
-            hotspot.lat,
-            hotspot.lng
-          );
-          return distance <= radiusKm;
-        });
+        // Filter by radius and calculate distance for each hotspot
+        const hotspots = mappedData
+          .map((hotspot) => {
+            const distance = calculateDistance(
+              centerLat,
+              centerLng,
+              hotspot.lat,
+              hotspot.lng
+            );
+            return {
+              ...hotspot,
+              distance
+            };
+          })
+          .filter((hotspot) => hotspot.distance <= radiusKm);
 
         console.log(`Fetched ${hotspots.length} ${businessType} hotspots within ${radiusKm}km radius`);
         allHotspots.push(...hotspots);
@@ -103,11 +108,12 @@ export async function fetchHotspotsByFilters(
     }
   }
 
-  // Sort by score (descending) and return top results
+  // Sort by distance (ascending) and return closest results
   console.log(`Total hotspots found: ${allHotspots.length}`);
   const results = allHotspots
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxResults);
-  console.log(`Returning ${results.length} hotspots`);
+    .sort((a: any, b: any) => a.distance - b.distance)
+    .slice(0, maxResults)
+    .map(({ distance, ...hotspot }: any) => hotspot); // Remove distance from final result
+  console.log(`Returning ${results.length} closest hotspots`);
   return results;
 }
