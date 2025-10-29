@@ -19,8 +19,8 @@ interface DashboardProps {
 
 export const Dashboard = ({ userLocation, onBack, onChangeLocation }: DashboardProps) => {
   const [selectedTypes, setSelectedTypes] = useState<BusinessType[]>([]);
-  const [radius, setRadius] = useState(5);
-  const [maxHotspots, setMaxHotspots] = useState(20);
+  const [radius, setRadius] = useState(100);
+  const [maxHotspots, setMaxHotspots] = useState(50);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
