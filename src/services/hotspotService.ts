@@ -108,10 +108,10 @@ export async function fetchHotspotsByFilters(
     }
   }
 
-  // Sort by rank (descending) and return top-ranked results
+  // Sort by rank (ascending - lower rank numbers are better) and return top-ranked results
   console.log(`Total hotspots found: ${allHotspots.length}`);
   const results = allHotspots
-    .sort((a: any, b: any) => b.rank - a.rank)
+    .sort((a: any, b: any) => a.rank - b.rank)
     .slice(0, maxResults)
     .map(({ distance, ...hotspot }: any) => hotspot); // Remove distance from final result
   console.log(`Returning ${results.length} top-ranked hotspots`);
